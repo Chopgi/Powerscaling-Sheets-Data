@@ -1,8 +1,8 @@
 window.onload = function () {
   loadDatabase();
   document
-    .querySelector("#searchBtn")
-    .addEventListener("click", async function () {
+    .querySelector("#searchbar")
+    .addEventListener("input", async function () {
       //      const query = document.querySelector("#searchbar").value;
       filterRoster();
     });
@@ -77,7 +77,7 @@ function renderRoster(data) {
     card.className = "card";
 
     card.innerHTML = `
-          <img class="card-img" src="${imageSrc}" alt="${charName}">
+          <img class="card-img" src="${imageSrc}" alt="${charName}" onclick="showProfile('${charName.replace(/'/g, "\\'")}')">
           <div class="card-body" onclick="showProfile('${charName.replace(/'/g, "\\'")}')">
             <h2 class="card-title">${charName}</h2>
             <span class="badge">Tier ${getTier(item)}</span>
