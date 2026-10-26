@@ -33,6 +33,7 @@ const getNotes = (item) => item["Notes"] || "None";
 const getTags = (item) => item["Tags"] || item.Tags || "";
 const getImage = (item) =>
   item["Image Link / Name"] || item["Image Link"] || "";
+const placeholderIMG = "https://via.placeholder.com/300x350?text=No+Image";
 
 async function loadDatabase() {
   Papa.parse(SHEET_CSV_URL, {
@@ -59,8 +60,8 @@ function renderRoster(data) {
 
   data.forEach((item) => {
     const charName = getCharName(item);
-    const imageSrc = "https://via.placeholder.com/300x350?text=No+Image";
-    //   getImage(item) || "https://via.placeholder.com/300x350?text=No+Image"; commented out for debugging
+    const imageName = getImage(item).trim();
+    const imageSrc = imageName ? "./Images/" + imageName : placeholderIMG;
     const rawTags = getTags(item);
     const tagsArray = rawTags
       .split(",")
@@ -71,7 +72,7 @@ function renderRoster(data) {
     card.className = "card";
 
     card.innerHTML = `
-          <img class="card-img" src="${imageSrc}" alt="${charName}" onclick="showProfile('${charName.replace(/'/g, "\\'")}')">
+          <img class="card-img" src="${imageSrc}" alt="${charName}" onerror="this.onerror=null; this.src='${placeholderIMG}';"  onclick="showProfile('${charName.replace(/'/g, "\\'")}')">
           <div class="card-body" onclick="showProfile('${charName.replace(/'/g, "\\'")}')">
             <h2 class="card-title">${charName}</h2>
             <span class="badge">Tier ${getTier(item)}</span>
@@ -94,8 +95,8 @@ function showProfile(characterName) {
   document.getElementById("profile-view").classList.remove("hidden");
 
   const charName = getCharName(character);
-  const imageSrc =
-    getImage(character) || "https://via.placeholder.com/300x350?text=No+Image";
+  const imageName = getImage(character).trim();
+  const imageSrc = imageName ? "./Images/" + imageName : placeholderIMG;
   const proofLink = getFeats(character)
     ? `<a href="${getFeats(character)}" target="_blank" style="color: var(--accent);">View Feat / Calculation Proof</a>`
     : "N/A";
@@ -108,7 +109,7 @@ function showProfile(characterName) {
   const profileContent = document.getElementById("profile-content");
   profileContent.innerHTML = `
         <div class="profile-header">
-          <img class="profile-img" src="${imageSrc}" alt="${charName}">
+          <img class="profile-img" src="${imageSrc}" alt="${charName}" onerror="this.onerror=null; this.src='${placeholderIMG}';">
           <div class="profile-info">
             <h1>${charName}</h1>
             <div style="margin-top: 15px;"><span class="badge" style="font-size: 1rem;">Tier ${getTier(character)}</span></div>
@@ -157,7 +158,7 @@ function filterRoster() {
 
 function searchByTag(tag) {
   showRoster();
-  const searchInput = document.getElementById("search");
+  const searchInput = document.getElementById("searchbar");
   searchInput.value = tag;
   filterRoster();
 }
