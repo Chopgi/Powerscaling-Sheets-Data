@@ -14,10 +14,7 @@ const SHEET_CSV_URL =
 let characterData = [];
 
 // Helper functions to safely map Google Form response headers
-const getCharName = (item) =>
-  item["Character Name and era, Example: Goku (Saiyan Saga)"] ||
-  item.Character ||
-  "";
+const getCharName = (item) => item["Character Name"] || item.Character || "";
 const getTier = (item) => item["Tier / Tier range"] || item.Tier || "N/A";
 const getAP = (item) => item["AP (Attack Potency)"] || item.AP || "N/A";
 const getSpeed = (item) => item["Speed"] || "N/A";
@@ -33,10 +30,7 @@ const getEquip = (item) => item["Standard Equipment"] || "N/A";
 const getFeats = (item) =>
   item["External links for primary feats"] || item["Feat / Proof Link"] || "";
 const getNotes = (item) => item["Notes"] || "None";
-const getTags = (item) =>
-  item["Tags, separated by commas inside of quotation marks"] ||
-  item.Tags ||
-  "";
+const getTags = (item) => item["Tags"] || item.Tags || "";
 const getImage = (item) =>
   item["Image Link / Name"] || item["Image Link"] || "";
 
