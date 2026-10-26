@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Powerscaling Database</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #0d1117;
+      --card-bg: #161b22;
+      --border-color: #30363d;
+      --text-main: #c9d1d9;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --tier-badge: #238636;
+      --tag-bg: #21262d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 30px; }
+    h1 { color: #fff; margin-bottom: 10px; }
+
+    #search {
+      width: 100%;
+      max-width: 500px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+    }
+    #search:focus { border-color: var(--accent); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .card:hover { transform: translateY(-4px); border-color: var(--accent); }
+
+    .card-img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      background: #000;
+    }
+
+    .card-body { padding: 16px; }
+    .card-title { margin: 0 0 6px 0; color: #fff; font-size: 1.25rem; }
+
+    .badge {
+      display: inline-block;
+      background: var(--tier-badge);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .tag {
+      background: var(--tag-bg);
+      border: 1px solid var(--border-color);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .tag:hover { background: var(--border-color); color: #fff; }
+
+    .hidden { display: none !important; }
+
+    .back-btn {
+      background: var(--card-bg);
+      color: var(--accent);
+      border: 1px solid var(--border-color);
+      padding: 10px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+    }
+    .back-btn:hover { background: var(--border-color); color: #fff; }
+
+    .profile-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .profile-img {
+      width: 100%;
+      max-width: 300px;
+      height: 350px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: #000;
+    }
+
+    .profile-info { flex: 1; min-width: 280px; }
+    .profile-info h1 { margin-top: 0; font-size: 2.2rem; }
+
+    .stats-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .stat-box {
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      padding: 12px 16px;
+      border-radius: 8px;
+    }
+
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .stat-value { color: #fff; font-size: 1rem; }
+    .full-width { grid-column: 1 / -1; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Roster View -->
+    <div id="roster-view">
+      <header>
+        <h1>Powerscaling Database</h1>
+        <input type="text" id="search" placeholder="Search by character name, tier, or tags..." oninput="filterRoster()">
+      </header>
+      <div id="character-grid" class="grid"></div>
+    </div>
+
+    <!-- Profile View -->
+    <div id="profile-view" class="hidden">
+      <button class="back-btn" onclick="showRoster()">← Back to Roster</button>
+      <div id="profile-content"></div>
+    </div>
+  </div>
+
+  <script>
+    // Link to your Form Responses published CSV URL
+    const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWRS4v9F9SJ-Y4wUOO3efaf3UXCItz8EX4wK4QV6lnHX37MQMrchewnvjC9IcwYnehddX5VjBAzUxi/pub?output=csv';
+
+    let characterData = [];
+
+    // Helper functions to safely map Google Form response headers
+    const getCharName = (item) => item['Character Name and era, Example: Goku (saiyan saga )'] || item.Character || '';
+    const getTier = (item) => item['Tier / Tier range'] || item.Tier || 'N/A';
+    const getAP = (item) => item['AP (Attack Potency)'] || item.AP || 'N/A';
+    const getSpeed = (item) => item['Speed'] || 'N/A';
+    const getDurability = (item) => item['Durability'] || 'N/A';
+    const getStriking = (item) => item['Striking Strength'] || 'N/A';
+    const getLifting = (item) => item['Lifting Strength'] || 'N/A';
+    const getStamina = (item) => item['Stamina'] || 'N/A';
+    const getRange = (item) => item['Range'] || 'N/A';
+    const getIntel = (item) => item['Intelligence'] || 'N/A';
+    const getAbilities = (item) => item['Abilities'] || item['Hax / Abilities'] || 'N/A';
+    const getEquip = (item) => item['Standard Equipment'] || 'N/A';
+    const getFeats = (item) => item['External links for primary feats'] || item['Feat / Proof Link'] || '';
+    const getNotes = (item) => item['Notes'] || 'None';
+    const getTags = (item) => item['Tags, separated by commas inside of quotation marks'] || item.Tags || '';
+    const getImage = (item) => item['Image Link / Name'] || item['Image Link'] || '';
+
+    async function loadDatabase() {
+      Papa.parse(SHEET_CSV_URL, {
+        download: true,
+        header: true,
+        complete: (results) => {
+          characterData = results.data.filter(item => getCharName(item).trim() !== '');
+          renderRoster(characterData);
+        }
+      });
+    }
+
+    function renderRoster(data) {
+      const grid = document.getElementById('character-grid');
+      grid.innerHTML = '';
+
+      if (data.length === 0) {
+        grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1;">No characters found.</p>';
+        return;
+      }
+
+      data.forEach(item => {
+        const charName = getCharName(item);
+        const imageSrc = getImage(item) || 'https://via.placeholder.com/300x350?text=No+Image';
+        const rawTags = getTags(item);
+        const tagsArray = rawTags.split(',').map(t => t.replace(/"/g, '').trim()).filter(t => t.length > 0);
+
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        card.innerHTML = `
+          <img class="card-img" src="${imageSrc}" alt="${charName}">
+          <div class="card-body" onclick="showProfile('${charName.replace(/'/g, "\\'")}')">
+            <h2 class="card-title">${charName}</h2>
+            <span class="badge">Tier ${getTier(item)}</span>
+            <div class="tags-container">
+              ${tagsArray.map(tag => `<span class="tag" onclick="event.stopPropagation(); searchByTag('${tag}')">${tag}</span>`).join('')}
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function showProfile(characterName) {
+      const character = characterData.find(item => getCharName(item) === characterName);
+      if (!character) return;
+
+      document.getElementById('roster-view').classList.add('hidden');
+      document.getElementById('profile-view').classList.remove('hidden');
+
+      const charName = getCharName(character);
+      const imageSrc = getImage(character) || 'https://via.placeholder.com/300x350?text=No+Image';
+      const proofLink = getFeats(character) ? `<a href="${getFeats(character)}" target="_blank" style="color: var(--accent);">View Feat / Calculation Proof</a>` : 'N/A';
+      const rawTags = getTags(character);
+      const tagsArray = rawTags.split(',').map(t => t.replace(/"/g, '').trim()).filter(t => t.length > 0);
+
+      const profileContent = document.getElementById('profile-content');
+      profileContent.innerHTML = `
+        <div class="profile-header">
+          <img class="profile-img" src="${imageSrc}" alt="${charName}">
+          <div class="profile-info">
+            <h1>${charName}</h1>
+            <div style="margin-top: 15px;"><span class="badge" style="font-size: 1rem;">Tier ${getTier(character)}</span></div>
+            <div class="tags-container" style="margin-top: 15px;">
+              ${tagsArray.map(tag => `<span class="tag" onclick="searchByTag('${tag}')">${tag}</span>`).join('')}
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-section">
+          <h2>Combat Metrics & Powerscaling</h2>
+          <div class="stats-grid">
+            <div class="stat-box"><div class="stat-label">Attack Potency (AP)</div><div class="stat-value">${getAP(character)}</div></div>
+            <div class="stat-box"><div class="stat-label">Speed</div><div class="stat-value">${getSpeed(character)}</div></div>
+            <div class="stat-box"><div class="stat-label">Durability</div><div class="stat-value">${getDurability(character)}</div></div>
+            <div class="stat-box"><div class="stat-label">Striking Strength</div><div class="stat-value">${getStriking(character)}</div></div>
+            <div class="stat-box"><div class="stat-label">Lifting Strength</div><div class="stat-value">${getLifting(character)}</div></div>
+            <div class="stat-box"><div class="stat-label">Stamina</div><div class="stat-value">${getStamina(character)}</div></div>
+            <div class="stat-box"><div class="stat-label">Range</div><div class="stat-value">${getRange(character)}</div></div>
+            <div class="stat-box"><div class="stat-label">Intelligence</div><div class="stat-value">${getIntel(character)}</div></div>
+            <div class="stat-box full-width"><div class="stat-label">Abilities / Hax</div><div class="stat-value">${getAbilities(character)}</div></div>
+            <div class="stat-box full-width"><div class="stat-label">Standard Equipment</div><div class="stat-value">${getEquip(character)}</div></div>
+            <div class="stat-box full-width"><div class="stat-label">Feats & Primary Calculation Links</div><div class="stat-value">${proofLink}</div></div>
+            <div class="stat-box full-width"><div class="stat-label">Notes / Additional Context</div><div class="stat-value">${getNotes(character)}</div></div>
+          </div>
+        </div>
+      `;
+      window.scrollTo(0, 0);
+    }
+
+    function showRoster() {
+      document.getElementById('profile-view').classList.add('hidden');
+      document.getElementById('roster-view').classList.remove('hidden');
+    }
+
+    function filterRoster() {
+      const query = document.getElementById('search').value.toLowerCase();
+      const filtered = characterData.filter(item =>
+        getCharName(item).toLowerCase().includes(query) ||
+        getTier(item).toLowerCase().includes(query) ||
+        getTags(item).toLowerCase().includes(query)
+      );
+      renderRoster(filtered);
+    }
+
+    function searchByTag(tag) {
+      showRoster();
+      const searchInput = document.getElementById('search');
+      searchInput.value = tag;
+      filterRoster();
+    }
+
+    loadDatabase();
+  </script>
+</body>
+</html>
