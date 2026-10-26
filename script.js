@@ -61,7 +61,12 @@ function renderRoster(data) {
   data.forEach((item) => {
     const charName = getCharName(item);
     const imageName = getImage(item).trim();
-    const imageSrc = imageName ? "./Images/" + imageName : placeholderIMG;
+    const cleanImageName = imageName
+      .replace(/^\.\/Images\//i, "")
+      .replace(/^Images\//i, ""); //cleaning image name since an entry contains "./Images" in the data that is sent over
+    const imageSrc = cleanImageName
+      ? "./Images/" + cleanImageName
+      : placeholderIMG;
     const rawTags = getTags(item);
     const tagsArray = rawTags
       .split(",")
@@ -96,7 +101,12 @@ function showProfile(characterName) {
 
   const charName = getCharName(character);
   const imageName = getImage(character).trim();
-  const imageSrc = imageName ? "./Images/" + imageName : placeholderIMG;
+  const cleanImageName = imageName
+    .replace(/^\.\/Images\//i, "")
+    .replace(/^Images\//i, ""); //cleaning image name since an entry contains "./Images" in the data that is sent over
+  const imageSrc = cleanImageName
+    ? "./Images/" + cleanImageName
+    : placeholderIMG;
   const proofLink = getFeats(character)
     ? `<a href="${getFeats(character)}" target="_blank" style="color: var(--accent);">View Feat / Calculation Proof</a>`
     : "N/A";
